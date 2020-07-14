@@ -2,7 +2,7 @@
 //! This module covers generating points in a hexagonal fashion.
 //!
 
-use cgmath::{InnerSpace, Point3, Vector3};
+use glam::Vec3;
 use std::collections::HashMap;
 
 // The following constants are used in calculations.
@@ -59,7 +59,7 @@ unsafe impl bytemuck::Zeroable for WaterVertexAttributes {}
 ///
 #[derive(Copy, Clone, Debug)]
 pub struct TerrainVertex {
-    pub position: Point3<f32>,
+    pub position: Vec3,
     pub colour: [u8; 4],
 }
 
@@ -103,7 +103,7 @@ fn surrounding_point_values_iter<T>(
 ///
 /// Used in calculating terrain normals.
 ///
-pub fn calculate_normal(a: Point3<f32>, b: Point3<f32>, c: Point3<f32>) -> Vector3<f32> {
+pub fn calculate_normal(a: Vec3, b: Vec3, c: Vec3) -> Vec3 {
     (b - a).normalize().cross((c - a).normalize()).normalize()
 }
 
@@ -141,8 +141,8 @@ impl HexTerrainMesh {
                 let z = B * (x_o * S45 + y_o * C45);
                 if x.hypot(z) < radius {
                     let vertex = gen_vertex([x, z]);
-                    if vertex.position.y > max {
-                        max = vertex.position.y;
+                    if vertex.position.y() > max {
+                        max = vertex.position.y();
                     }
                     map.insert((i, j), vertex);
                 }
@@ -159,19 +159,11 @@ impl HexTerrainMesh {
     ///
     pub fn make_buffer_data(&self) -> Vec<TerrainVertexAttributes> {
         let mut vertices = Vec::new();
-        fn middle(p1: &TerrainVertex, p2: &TerrainVertex, p: &TerrainVertex) -> Point3<f32> {
-            Point3 {
-                x: (p1.position.x + p2.position.x + p.position.x) / 3.0,
-                y: (p1.position.y + p2.position.y + p.position.y) / 3.0,
-                z: (p1.position.z + p2.position.z + p.position.z) / 3.0,
-            }
+        fn middle(p1: &TerrainVertex, p2: &TerrainVertex, p: &TerrainVertex) -> Vec3 {
+            (p1.position + p2.position + p.position) / 3.0
         }
-        fn half(p1: &TerrainVertex, p2: &TerrainVertex) -> Point3<f32> {
-            Point3 {
-                x: (p1.position.x + p2.position.x) / 2.0,
-                y: (p1.position.y + p2.position.y) / 2.0,
-                z: (p1.position.z + p2.position.z) / 2.0,
-            }
+        fn half(p1: &TerrainVertex, p2: &TerrainVertex) -> Vec3 {
+            (p1.position + p2.position) / 2.0
         }
         let mut push_triangle = |p1: &TerrainVertex,
                                  p2: &TerrainVertex,

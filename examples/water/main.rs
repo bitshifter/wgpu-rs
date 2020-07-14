@@ -3,7 +3,7 @@ mod framework;
 
 mod point_gen;
 
-use cgmath::Point3;
+use glam::Vec3;
 use std::{iter, mem};
 
 ///
@@ -20,16 +20,12 @@ const SIZE: f32 = 10.0;
 /// Location of the camera.
 /// Location of light is in terrain/water shaders.
 ///
-const CAMERA: Point3<f32> = Point3 {
-    x: -100.0,
-    y: 50.0,
-    z: 100.0,
-};
+const CAMERA: [f32;3] = [-100.0, 50.0, 100.0];
 
 struct Matrices {
-    view: cgmath::Matrix4<f32>,
-    flipped_view: cgmath::Matrix4<f32>,
-    projection: cgmath::Matrix4<f32>,
+    view: glam::Mat4,
+    flipped_view: glam::Mat4,
+    projection: glam::Mat4,
 }
 
 #[repr(C)]
@@ -102,31 +98,29 @@ impl Example {
     /// Creates the view matrices, and the corrected projection matrix.
     ///
     fn generate_matrices(aspect_ratio: f32) -> Matrices {
-        let projection = cgmath::perspective(cgmath::Deg(45f32), aspect_ratio, 10.0, 400.0);
-        let reg_view = cgmath::Matrix4::look_at(
-            CAMERA,
-            cgmath::Point3::new(0f32, 0.0, 0.0),
-            cgmath::Vector3::unit_y(), //Note that y is up. Differs from other examples.
+        let projection = glam::Mat4::perspective_rh(45f32.to_radians(), aspect_ratio, 10.0, 400.0);
+        let reg_view = glam::Mat4::look_at_rh(
+            CAMERA.into(),
+            glam::Vec3::zero(),
+            glam::Vec3::unit_y(), //Note that y is up. Differs from other examples.
         );
 
-        let scale = cgmath::Matrix4::from_nonuniform_scale(8.0, 1.5, 8.0);
+        let scale = glam::Mat4::from_scale(glam::Vec3::new(8.0, 1.5, 8.0));
 
         let reg_view = reg_view * scale;
 
-        let flipped_view = cgmath::Matrix4::look_at(
-            cgmath::Point3::new(CAMERA.x, -CAMERA.y, CAMERA.z),
-            cgmath::Point3::new(0f32, 0.0, 0.0),
-            cgmath::Vector3::unit_y(),
+        let flipped_view = glam::Mat4::look_at_rh(
+            glam::Vec3::new(CAMERA[0], -CAMERA[1], CAMERA[2]),
+            glam::Vec3::zero(),
+            glam::Vec3::unit_y(),
         );
-
-        let correction = framework::OPENGL_TO_WGPU_MATRIX;
 
         let flipped_view = flipped_view * scale;
 
         Matrices {
             view: reg_view,
             flipped_view,
-            projection: correction * projection,
+            projection,
         }
     }
 
@@ -324,11 +318,7 @@ impl framework::Example for Example {
                     SNOW
                 };
                 point_gen::TerrainVertex {
-                    position: Point3 {
-                        x: point[0],
-                        y,
-                        z: point[1],
-                    },
+                    position: Vec3::new(point[0], y, point[1]),
                     colour: mul_arr(colour, random),
                 }
             });

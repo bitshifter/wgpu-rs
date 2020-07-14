@@ -5,7 +5,7 @@ use futures::task::{LocalSpawn, LocalSpawnExt};
 
 const SKYBOX_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8Unorm;
 
-type Uniform = cgmath::Matrix4<f32>;
+type Uniform = glam::Mat4;
 type Uniforms = [Uniform; 2];
 
 fn raw_uniforms(uniforms: &Uniforms) -> [f32; 16 * 2] {
@@ -26,14 +26,13 @@ pub struct Skybox {
 
 impl Skybox {
     fn generate_uniforms(aspect_ratio: f32) -> Uniforms {
-        let mx_projection = cgmath::perspective(cgmath::Deg(45f32), aspect_ratio, 1.0, 10.0);
-        let mx_view = cgmath::Matrix4::look_at(
-            cgmath::Point3::new(1.5f32, -5.0, 3.0),
-            cgmath::Point3::new(0f32, 0.0, 0.0),
-            cgmath::Vector3::unit_z(),
+        let mx_projection = glam::Mat4::perspective_rh(45f32.to_radians(), aspect_ratio, 1.0, 10.0);
+        let mx_view = glam::Mat4::look_at_rh(
+            glam::Vec3::new(1.5, -5.0, 3.0),
+            glam::Vec3::zero(),
+            glam::Vec3::unit_z(),
         );
-        let mx_correction = framework::OPENGL_TO_WGPU_MATRIX;
-        [mx_correction * mx_projection, mx_correction * mx_view]
+        [mx_projection, mx_view]
     }
 }
 
@@ -267,7 +266,7 @@ impl framework::Example for Skybox {
         spawner: &impl LocalSpawn,
     ) {
         // update rotation
-        let rotation = cgmath::Matrix4::<f32>::from_angle_x(cgmath::Deg(0.25));
+        let rotation = glam::Mat4::from_rotation_x(0.25_f32.to_radians());
         self.uniforms[1] = self.uniforms[1] * rotation;
         let raw_uniforms = raw_uniforms(&self.uniforms);
         self.staging_belt

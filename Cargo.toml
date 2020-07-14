@@ -51,7 +51,8 @@ typed-arena = "2.0.1"
 gfx-backend-vulkan = { version = "0.5", features = ["x11"] }
 
 [dev-dependencies]
-cgmath = "0.17"
+# using git for unrelease `Mat4::perspective_rh`
+glam = { git = "https://github.com/bitshifter/glam-rs" }
 log = "0.4"
 png = "0.16"
 winit = { version = "0.22.1", features = ["web-sys"] }
